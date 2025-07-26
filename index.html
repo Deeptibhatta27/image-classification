@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waste Classifier - Image Upload</title>
+</head>
+<body>
+    <h1>Teachable Machine Waste Classifier</h1>
+
+    <input type="file" id="imageUpload" accept="image/*">
+    <button type="button" onclick="predictImage()">Classify Image</button>
+
+    <div>
+        <img id="uploadedImage" src="" alt="Preview" style="max-width: 300px; display:none; margin-top: 10px;">
+    </div>
+    <div id="label-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+    <script type="text/javascript">
+        const URL = "./my_model/";
+        let model, labelContainer, maxPredictions;
+
+        async function init() {
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+            labelContainer = document.getElementById("label-container");
+            for (let i = 0; i < maxPredictions; i++) {
+                labelContainer.appendChild(document.createElement("div"));
+            }
+        }
+
+        // Show preview when an image is uploaded
+        document.getElementById("imageUpload").addEventListener("change", function (event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.getElementById("uploadedImage");
+                    img.src = e.target.result;
+                    img.style.display = "block";
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Predict function
+        async function predictImage() {
+            const img = document.getElementById("uploadedImage");
+            const prediction = await model.predict(img);
+            for (let i = 0; i < maxPredictions; i++) {
+                const classPrediction =
+                    prediction[i].className + ": " + (prediction[i].probability * 100).toFixed(2) + "%";
+                labelContainer.childNodes[i].innerHTML = classPrediction;
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
